@@ -2,6 +2,8 @@
 
 from __future__ import absolute_import
 
+import logging
+
 from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
 import flask
@@ -47,7 +49,12 @@ class Resource(model.Base):
   @classmethod
   def _pre_delete_hook(cls, key):
     resource_db = key.get()
-    blobstore.BlobInfo.get(resource_db.blob_key).delete()
+    try:
+      blobstore.BlobInfo.get(resource_db.blob_key).delete()
+    except AttributeError:
+      logging.error('Blob %s not found during delete (resource_key: %s)' % (
+        resource_db.blob_key, resource_db.key().urlsafe(),
+      ))
 
   FIELDS = {
     'bucket_name': fields.String,
